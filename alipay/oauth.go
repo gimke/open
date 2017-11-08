@@ -48,16 +48,17 @@ type OauthTokenResponse struct {
 		SubMsg       string `json:"sub_msg"`
 		UserId       string `json:"user_id"`       // 支付宝用户的唯一userId
 		AccessToken  string `json:"access_token"`  // 访问令牌。通过该令牌调用需要授权类接口
-		ExpiresIn    string `json:"expires_in"`    // 访问令牌的有效时间，单位是秒。
+		ExpiresIn    int    `json:"expires_in"`    // 访问令牌的有效时间，单位是秒。
 		RefreshToken string `json:"refresh_token"` // 刷新令牌。通过该令牌可以刷新access_token
-		ReExpiresIn  string `json:"re_expires_in"` // 刷新令牌的有效时间，单位是秒。
+		ReExpiresIn  int    `json:"re_expires_in"` // 刷新令牌的有效时间，单位是秒。
 
-	} `json:"alipay_system_oauth_token_response"`
-	Sign string `json:"sign"`
+	} `json:"alipay_system_oauth_token_response,omitempty"`
+	ErrorResponse `json:"error_response,omitempty"`
+	Sign          string `json:"sign"`
 }
 
 func (this *OauthTokenResponse) IsSuccess() bool {
-	if this.OauthTokenResponse.Code == "10000" {
+	if this.OauthTokenResponse.UserId != "" {
 		return true
 	}
 	return false
