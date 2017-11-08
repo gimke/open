@@ -6,22 +6,22 @@ import (
 )
 
 type Client struct {
-	gateway	       	string
+	gateway         string
 	appId           string
 	privateKey      string
 	aliPayPublicKey string
 	signType        string
-	AppAuthToken 	string
+	AppAuthToken    string
 }
 
 //创建client
 func NewClient(gateway, appId, privateKey, aliPayPublicKey, signType string) *Client {
 	return &Client{
-		gateway:gateway,
-		appId:appId,
-		privateKey:privateKey,
-		aliPayPublicKey:aliPayPublicKey,
-		signType:signType,
+		gateway:         gateway,
+		appId:           appId,
+		privateKey:      privateKey,
+		aliPayPublicKey: aliPayPublicKey,
+		signType:        signType,
 	}
 }
 

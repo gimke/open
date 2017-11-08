@@ -18,7 +18,6 @@ type Request interface {
 	JSON() string
 
 	GetResponse() Response
-
 }
 
 func marshal(obj interface{}) string {
