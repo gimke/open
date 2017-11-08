@@ -9,18 +9,18 @@ type OauthTokenRequest struct {
 	response     *OauthTokenResponse
 }
 
-func (r *OauthTokenRequest) Method() string {
+func (this *OauthTokenRequest) Method() string {
 	return "alipay.system.oauth.token"
 }
 
-func (r *OauthTokenRequest) Params() map[string]string {
+func (this *OauthTokenRequest) Params() map[string]string {
 	var m = make(map[string]string)
-	m["grant_type"] = r.GrantType
-	if r.Code != "" {
-		m["code"] = r.Code
+	m["grant_type"] = this.GrantType
+	if this.Code != "" {
+		m["code"] = this.Code
 	}
-	if r.RefreshToken != "" {
-		m["refresh_token"] = r.RefreshToken
+	if this.RefreshToken != "" {
+		m["refresh_token"] = this.RefreshToken
 	}
 	return m
 }
