@@ -40,15 +40,15 @@ func NewClient(gateway, appId, privateKey, aliPayPublicKey, signType string) *Cl
 }
 
 //执行
-func (this *Client) Excute(request Request) (response Response, err error) {
+func (this *Client) Excute(request Request) (response Response) {
 	response = request.GetResponse()
 	buf, err := this.MakeBuffer(request)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	req, err := http.NewRequest("POST", this.gateway, buf)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
 
@@ -60,18 +60,18 @@ func (this *Client) Excute(request Request) (response Response, err error) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	err = json.Unmarshal(data, response)
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return response, nil
+	return response
 }
 
 func (this *Client) MakeBuffer(request Request) (buf io.Reader, err error) {
