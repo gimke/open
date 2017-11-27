@@ -1,21 +1,28 @@
 package alipay
 
 import (
-	"encoding/json"
-	"io"
-	"time"
-	"net/url"
-	"strings"
-	"net/http"
-	"io/ioutil"
-	"sort"
 	"crypto"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"github.com/gimke/open/encoding"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"sort"
+	"strings"
+	"time"
 )
+
 const (
 	RSA  = "RSA"
 	RSA2 = "RSA2"
+)
+const (
+	RESPONSE_SUFFIX = "_response"
+	ERROR_RESPONSE  = "error_response"
+	SIGN_NODE_NAME  = "sign"
 )
 
 type Client struct {
@@ -40,15 +47,15 @@ func NewClient(gateway, appId, privateKey, aliPayPublicKey, signType string) *Cl
 }
 
 //执行
-func (this *Client) Excute(request Request) (response Response) {
+func (this *Client) Excute(request Request) (response Response, err error) {
 	response = request.GetResponse()
 	buf, err := this.MakeBuffer(request)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	req, err := http.NewRequest("POST", this.gateway, buf)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
 
@@ -60,18 +67,43 @@ func (this *Client) Excute(request Request) (response Response) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil
+		return nil, err
 	}
+
+	if len(this.aliPayPublicKey) > 0 {
+		var dataStr = string(data)
+
+		var rootNodeName = strings.Replace(request.Method(), ".", "_", -1) + RESPONSE_SUFFIX
+
+		var rootIndex = strings.LastIndex(dataStr, rootNodeName)
+		var errorIndex = strings.LastIndex(dataStr, ERROR_RESPONSE)
+
+		var content string
+		var sign string
+
+		if rootIndex > 0 {
+			content, sign = parserJSONSource(dataStr, rootNodeName, rootIndex)
+		} else if errorIndex > 0 {
+			content, sign = parserJSONSource(dataStr, ERROR_RESPONSE, errorIndex)
+		} else {
+			return nil, errors.New("error format")
+		}
+
+		if ok, err := verifyResponseData([]byte(content), this.signType, sign, this.aliPayPublicKey); ok == false {
+			return nil, err
+		}
+	}
+
 	err = json.Unmarshal(data, response)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return response
+	return response, nil
 }
 
 func (this *Client) MakeBuffer(request Request) (buf io.Reader, err error) {
@@ -102,7 +134,6 @@ func (this *Client) MakeBuffer(request Request) (buf io.Reader, err error) {
 
 	sort.Strings(keys)
 
-
 	var sign string
 	if this.signType == RSA {
 		sign, err = signRSA(keys, p, []byte(this.privateKey))
@@ -119,6 +150,41 @@ func (this *Client) MakeBuffer(request Request) (buf io.Reader, err error) {
 	return buf, nil
 }
 
+func parserJSONSource(rawData string, nodeName string, nodeIndex int) (content string, sign string) {
+	var dataStartIndex = nodeIndex + len(nodeName) + 2
+	var signIndex = strings.LastIndex(rawData, "\""+SIGN_NODE_NAME+"\"")
+	var dataEndIndex = signIndex - 1
+
+	var indexLen = dataEndIndex - dataStartIndex
+	if indexLen < 0 {
+		return "", ""
+	}
+	content = rawData[dataStartIndex:dataEndIndex]
+
+	var signStartIndex = signIndex + len(SIGN_NODE_NAME) + 4
+	sign = rawData[signStartIndex:]
+	var signEndIndex = strings.LastIndex(sign, "\"}")
+	sign = sign[:signEndIndex]
+
+	return content, sign
+}
+
+func verifyResponseData(data []byte, signType, sign string, key string) (ok bool, err error) {
+	signBytes, err := base64.StdEncoding.DecodeString(sign)
+	if err != nil {
+		return false, err
+	}
+
+	if signType == RSA {
+		err = encoding.VerifyPKCS1v15(data, signBytes, []byte(key), crypto.SHA1)
+	} else {
+		err = encoding.VerifyPKCS1v15(data, signBytes, []byte(key), crypto.SHA256)
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 
 func signRSA2(keys []string, param url.Values, privateKey []byte) (s string, err error) {
 	if param == nil {
