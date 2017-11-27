@@ -39,7 +39,7 @@ func (this *TradeQueryRequest) GetResponse() Response {
 }
 
 type TradeQueryResponse struct {
-	TradeQueryResponse struct {
+	TradeQuery struct {
 		Code                string           `json:"code"`
 		Msg                 string           `json:"msg"`
 		SubCode             string           `json:"sub_code"`
@@ -86,7 +86,7 @@ type VoucherDetail struct {
 }
 
 func (this *TradeQueryResponse) IsSuccess() bool {
-	if this.TradeQueryResponse.Code == "10000" {
+	if this.TradeQuery.Code == "10000" {
 		return true
 	}
 	return false
