@@ -95,7 +95,7 @@ func (this *TradeCreateRequest) GetResponse() Response {
 }
 
 type TradeCreateResponse struct {
-	TradeCreateResponse struct {
+	TradeCreate struct {
 		Code       string `json:"code"`
 		Msg        string `json:"msg"`
 		SubCode    string `json:"sub_code"`
@@ -108,7 +108,7 @@ type TradeCreateResponse struct {
 }
 
 func (this *TradeCreateResponse) IsSuccess() bool {
-	if this.TradeCreateResponse.Code == "10000" {
+	if this.TradeCreate.Code == "10000" {
 		return true
 	}
 	return false
