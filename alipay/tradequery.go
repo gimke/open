@@ -1,6 +1,5 @@
 package alipay
 
-
 //统一收单交易查询接口
 //https://docs.open.alipay.com/api_1/alipay.trade.query
 
